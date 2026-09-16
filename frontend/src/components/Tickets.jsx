@@ -6,7 +6,7 @@ import StatusFilter from "./StatusFilter";
 import TicketTable from "./TicketTable";
 import { getTickets, getTicketStats } from "../js/api";
 import {
-  LifeBuoy,
+  Ticket,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -173,7 +173,7 @@ export default function Tickets() {
           value={stats.total}
           color="text-blue-600"
           bgColor="bg-blue-50"
-          icon={LifeBuoy}
+          icon={Ticket}
           isActive={status === ""}
           onClick={() => setStatus("")}
         />

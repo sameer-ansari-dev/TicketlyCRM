@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { ArrowRight, LifeBuoy, LockKeyhole, UserRound } from "lucide-react";
+import { ArrowRight, LockKeyhole, UserRound } from "lucide-react";
 import { useAuth } from "./AuthContext";
 
 export default function Login() {
@@ -29,8 +29,8 @@ export default function Login() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,99,235,0.08),_transparent_50%)] pointer-events-none" />
       <section className="relative w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex w-12 h-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20 mb-4">
-            <LifeBuoy className="w-6 h-6" />
+          <div className="inline-flex w-14 h-14 items-center justify-center rounded-2xl bg-white border border-slate-200 shadow-sm mb-4 p-2.5">
+            <img src="/apple-touch-icon.png" alt="TicketlyCRM Favicon" className="w-full h-full object-contain rounded-xl" />
           </div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">TicketlyCRM</p>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 mt-1">Welcome back</h1>

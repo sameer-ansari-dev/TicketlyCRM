@@ -37,6 +37,9 @@ export default function Signup() {
           <ArrowLeft className="w-4 h-4" /> Back to sign in
         </Link>
         <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="inline-flex w-12 h-12 items-center justify-center rounded-xl bg-white border border-slate-200 shadow-2xs mb-3 p-2">
+            <img src="/apple-touch-icon.png" alt="TicketlyCRM Favicon" className="w-full h-full object-contain rounded-lg" />
+          </div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">TicketlyCRM Access</p>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 mt-1">Create your account</h1>
           <p className="text-sm text-slate-500 mt-1.5 mb-7">Set up a local TicketlyCRM profile for this browser.</p>

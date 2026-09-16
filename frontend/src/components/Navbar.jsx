@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LifeBuoy, Menu, Plus, Search, LogOut } from "lucide-react";
+import { Menu, Plus, Search, LogOut } from "lucide-react";
 import { useAuth } from "./AuthContext";
 
 export default function Navbar({ onMenuClick }) {
@@ -47,9 +47,11 @@ export default function Navbar({ onMenuClick }) {
             to="/dashboard"
             className="lg:hidden flex items-center gap-2 text-slate-900 font-bold"
           >
-            <span className="brand-mark">
-              <LifeBuoy className="w-4 h-4 text-white" />
-            </span>
+            <img
+              src="/apple-touch-icon.png"
+              alt="TicketlyCRM Favicon"
+              className="w-7 h-7 rounded-lg object-contain shadow-xs"
+            />
             <span>Ticketly<span className="text-blue-600">CRM</span></span>
           </Link>
 

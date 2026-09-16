@@ -7,7 +7,6 @@ import {
   BarChart3,
   Users,
   Settings,
-  LifeBuoy,
   X,
 } from "lucide-react";
 
@@ -57,9 +56,11 @@ export default function Sidebar({ isOpen, onClose }) {
             onClick={onClose}
             className="flex items-center gap-2.5 text-slate-900 font-bold tracking-tight text-base"
           >
-            <span className="brand-mark">
-              <LifeBuoy className="w-4 h-4 text-white" />
-            </span>
+            <img
+              src="/apple-touch-icon.png"
+              alt="TicketlyCRM Favicon"
+              className="w-7 h-7 rounded-lg object-contain shadow-xs"
+            />
             <span>Ticketly<span className="text-blue-600">CRM</span></span>
           </Link>
           <button

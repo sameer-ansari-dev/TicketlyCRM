@@ -4,7 +4,6 @@ import StatsCard from "./StatsCard";
 import TicketTable from "./TicketTable";
 import { getTickets, getTicketStats } from "../js/api";
 import {
-  LifeBuoy,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -113,7 +112,7 @@ export default function Dashboard() {
           value={stats.total}
           color="text-blue-600"
           bgColor="bg-blue-50"
-          icon={LifeBuoy}
+          icon={Ticket}
           onClick={() => handleCardClick("")}
         />
         <StatsCard

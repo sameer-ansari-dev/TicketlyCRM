@@ -7,7 +7,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  LifeBuoy,
+  Ticket,
   ShieldAlert,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -93,7 +93,7 @@ export default function Analytics() {
               value={stats.total}
               color="text-blue-600"
               bgColor="bg-blue-50"
-              icon={LifeBuoy}
+              icon={Ticket}
             />
             <StatsCard
               title="Resolution Rate"
