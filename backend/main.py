@@ -57,16 +57,17 @@ async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError):
         }
     )
 
-# Configure CORS
+configured_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+# Same-origin Vercel deployments do not need CORS. Add trusted origins only when
+# the API is also consumed by a separate frontend or local development client.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "*"
-    ],
+    allow_origins=configured_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
