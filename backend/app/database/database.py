@@ -10,6 +10,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 
+IS_SERVERLESS = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+
 def get_database_url() -> str:
     """
     Constructs and normalizes the database URL for Supabase PostgreSQL or SQLite fallback.
@@ -32,8 +34,23 @@ def get_database_url() -> str:
             db_url = db_url.replace("postgres://", "postgresql://", 1)
         return db_url
 
-    # Fallback to local SQLite if no PostgreSQL URL is configured
+    # Fallback to SQLite if no PostgreSQL URL is configured
     database_dir = os.path.join(BASE_DIR, "database")
+
+    if IS_SERVERLESS:
+        # In Vercel serverless functions, /var/task is read-only.
+        # Copy the pre-seeded SQLite database to /tmp so writes succeed.
+        tmp_db = "/tmp/support_crm.db"
+        if not os.path.exists(tmp_db):
+            seed_db = os.path.join(database_dir, "support_crm.db")
+            if os.path.isfile(seed_db):
+                try:
+                    import shutil
+                    shutil.copy2(seed_db, tmp_db)
+                except Exception:
+                    pass
+        return f"sqlite:///{tmp_db}"
+
     os.makedirs(database_dir, exist_ok=True)
     database_path = os.path.join(database_dir, "support_crm.db")
     return f"sqlite:///{database_path.replace(os.sep, '/')}"
@@ -41,7 +58,6 @@ def get_database_url() -> str:
 
 DATABASE_URL = get_database_url()
 IS_POSTGRES = DATABASE_URL.startswith("postgresql")
-IS_SERVERLESS = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
 
 # Engine Configuration
 connect_args = {}

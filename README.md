@@ -1,187 +1,205 @@
-# TicketlyCRM - Customer Support Ticketing System
+# TicketlyCRM
 
-A full-stack, production-ready Customer Support Management application built for **TicketlyCRM**. It enables support teams to manage high-volume customer inquiries, triage issues, track SLAs, update resolution statuses, and collaborate via chronological team activity notes.
+A modern, high-performance Customer Support Management CRM engineered for fast-paced support teams. TicketlyCRM streamlines inbound inquiry tracking, issue triage, SLA monitoring, and collaborative team communication through chronological ticket activity logs.
 
-![TicketlyCRM Banner](docs/architecture.png)
-
----
-
-## Live Demo & Repository Links
-
-- **Repository**: [GitHub Repository](https://github.com/sameer-ansari/ticket-crm) *(Ready to push)*
-- **Demo Video**: Located in [`demo-video/demo.mp4`](demo-video/demo.mp4)
-- **Interactive OpenAPI Documentation**: `http://localhost:8000/docs`
+Designed with a cloud-native, decoupled full-stack architecture, TicketlyCRM pairs a fast **React + Vite** single-page application with an asynchronous **FastAPI** backend, fully configured for global serverless deployment on **Vercel** backed by **Supabase PostgreSQL** (or local SQLite for zero-config development).
 
 ---
 
-## Key Features Built
+## Features
 
-| # | Feature | Specification | Implementation Details |
-|---|---|---|---|
-| **1** | **Create Tickets** | Name, email, title, description, auto ID & timestamp | Validated form with priority selector, collision-free auto-generated IDs (`TKT-XXXX`), and instant redirect. |
-| **2** | **List All Tickets** | Clean list/table view | Responsive dark-slate table displaying ID, Customer, Subject, Status badge, Priority, and formatted dates. |
-| **3** | **Search Functionality** | Quick search as you type | Debounced real-time query across customer names, ticket IDs, customer emails, subjects, and descriptions. |
-| **4** | **Filter by Status** | Filter by Open, In Progress, Closed | Segmented pill controls with live counters for `All`, `Open`, `In Progress`, and `Closed`. |
-| **5** | **View & Update** | Detailed view, update status, add notes | Full detail view, one-click status updater, chronological team notes timeline, and instant note submission. |
-| **+** | **Standout: SLA & Priority** | Operational triage capability | Priority levels (`Low`, `Medium`, `High`, `Urgent`) with color-coded badges and response time guidelines. |
-| **+** | **Standout: CSV Export** | Reporting & audit capability | Client-side export to standard `.csv` for all filtered/searched records. |
-| **+** | **Standout: Seed Engine** | Realistic data on first launch | Automated database seeder populating realistic enterprise support tickets and multi-party notes. |
+- **Create Tickets**: Form validation with client/server schema enforcement, priority selector, automated collision-free ID generation (`TKT-XXXX`), and instant redirect.
+- **List Tickets**: Responsive, modern data table featuring customer avatars, subject previews, status badges, priority indicators, and relative timestamps.
+- **Search Tickets**: Instant real-time multi-field search querying customer name, customer email, ticket ID, subject line, and full description text.
+- **Filter by Status**: Segmented filter controls with dynamic count badges for `All`, `Open`, `In Progress`, and `Closed` tickets.
+- **View Ticket Details**: Comprehensive issue view displaying customer metadata, operational status, priority level, creation/update timestamps, and resolution history.
+- **Update Status**: One-click status transitions (`Open` → `In Progress` → `Closed`) with optimistic UI feedback and persistent audit timestamps.
+- **Notes System**: Chronological internal communication timeline allowing agents to add notes, document root causes, and track triage updates.
+- **Priority System**: Triage system with color-coded badges (`Low`, `Medium`, `High`, `Urgent`) and SLA response time guidelines.
+- **Data Analytics & Export**: Metric summary cards (Total, Open, In Progress, Closed) and client-side CSV data export.
 
 ---
 
-## Architectural Decisions & Tech Stack
+## Tech Stack
 
+| Layer | Technology | Description |
+|---|---|---|
+| **Frontend** | [React 18](https://react.dev/) + [Vite](https://vitejs.dev/) | High-speed build tooling and component-driven SPA interface |
+| **Styling** | [TailwindCSS](https://tailwindcss.com/) | Utility-first, responsive slate UI design system |
+| **Icons & UI** | [Lucide React](https://lucide.dev/) + [Framer Motion](https://www.framer.com/motion/) | Consistent iconography and smooth micro-interactions |
+| **Backend** | [FastAPI](https://fastapi.tiangolo.com/) | Asynchronous, high-performance Python web framework |
+| **Data Validation** | [Pydantic v2](https://docs.pydantic.dev/) + Email Validator | Robust data validation and automatic OpenAPI generation |
+| **Database ORM** | [SQLAlchemy 2.0](https://www.sqlalchemy.org/) | Relational database mapping with NullPool for serverless |
+| **Databases** | [Supabase](https://supabase.com/) PostgreSQL / SQLite | Production cloud PostgreSQL (via transaction pooler) & local SQLite |
+| **Deployment** | [Vercel](https://vercel.com/) | Global Edge CDN for SPA + Python Serverless Functions for API |
+
+---
+
+## Project Structure
+
+```text
+ticketly-crm/
+├── api/
+│   └── index.py               # Vercel Serverless Function entry point & ASGI path restoration
+├── backend/
+│   ├── app/
+│   │   ├── api/               # FastAPI route controllers (tickets, notes, stats)
+│   │   ├── database/          # Database connection, pooling, migration utilities
+│   │   ├── models/            # SQLAlchemy ORM models (Ticket, Note)
+│   │   ├── schemas/           # Pydantic request/response validation schemas
+│   │   ├── services/          # Business logic and database query operations
+│   │   └── utils/             # Ticket ID generator and helpers
+│   ├── database/
+│   │   └── support_crm.db     # Seed SQLite database for local development
+│   ├── tests/
+│   │   ├── test_api.py        # Automated backend integration test suite
+│   │   └── test_vercel_routing.py # Vercel ASGI rewrite & routing simulation tests
+│   ├── main.py                # Standalone FastAPI application
+│   └── requirements.txt       # Backend Python dependencies
+├── frontend/
+│   ├── public/                # Static assets (favicons, manifest)
+│   ├── src/
+│   │   ├── components/        # React components (Dashboard, Tickets, Details, etc.)
+│   │   ├── js/                # Axios API client with dynamic base URL detection
+│   │   ├── App.jsx            # Application root component
+│   │   ├── index.css          # Tailwind CSS directives and custom styles
+│   │   └── main.jsx           # React DOM mounting entry point
+│   ├── package.json           # Frontend dependencies & scripts
+│   └── vite.config.js         # Vite configuration with local dev proxy
+├── schema/
+│   ├── schema.sql             # Standard SQLite / PostgreSQL table schema
+│   └── supabase_schema.sql    # Supabase PostgreSQL schema with indexes
+├── .env.example               # Root environment variable template
+├── .python-version            # Pins Python 3.12 for Vercel Python runtime
+├── package.json               # Root monorepo orchestration scripts
+├── requirements.txt           # Root Python dependencies for Vercel builder
+└── vercel.json                # Vercel build, output, and serverless rewrites configuration
 ```
-   ┌────────────────────────────────────────────────────────┐
-   │                  React 18 + Vite + Tailwind CSS        │
-   │  • Lucide React Icons    • React Router v6    • Axios  │
-   └───────────────────────────┬────────────────────────────┘
-                               │ HTTP / JSON REST
-                               ▼
-   ┌────────────────────────────────────────────────────────┐
-   │                  FastAPI (Python 3.14 / 3.11)          │
-   │  • Pydantic v2 validation      • CORSMiddleware        │
-   │  • Auto OpenAPI / Swagger docs • Modular Routers       │
-   └───────────────────────────┬────────────────────────────┘
-                               │ SQLAlchemy 2.0 ORM
-                               ▼
-   ┌────────────────────────────────────────────────────────┐
-   │                  SQLite / PostgreSQL Database          │
-   │  • 'tickets' table  (ticket_id, status, priority, ...) │
-   │  • 'notes' table    (ticket_id FK, note_text, ...)     │
-   └────────────────────────────────────────────────────────┘
-```
-
-### Why This Stack?
-- **Backend: FastAPI + SQLAlchemy + SQLite**:
-  FastAPI provides automatic OpenAPI schema generation, strict Pydantic data validation, and asynchronous high performance. SQLite with SQLAlchemy ORM enables zero-config deployment while keeping the schema 100% compatible with PostgreSQL for enterprise scale.
-- **Frontend: React + Vite + Tailwind CSS**:
-  Vite provides instant sub-second Hot Module Replacement (HMR) and optimized build bundles. Tailwind CSS allows rapid crafting of a custom, accessible dark-slate UI without heavy CSS runtime overhead.
-- **Standout Trade-offs Made**:
-  Rather than adding shallow auth that complicates evaluation, we invested engineering effort into **multi-field search**, **priority SLA indicators**, **rich note collaboration timelines**, and **one-click CSV data export**—features that support teams handling hundreds of tickets actually rely on every single day.
 
 ---
 
-## Database Schema Design
-
-The relational database uses two tables linked via a Foreign Key with `CASCADE` deletion:
-
-```sql
--- Tickets Table
-CREATE TABLE tickets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticket_id VARCHAR(32) NOT NULL UNIQUE,
-    customer_name VARCHAR(255) NOT NULL,
-    customer_email VARCHAR(255) NOT NULL,
-    subject VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'Open',
-    priority VARCHAR(20) NOT NULL DEFAULT 'Medium',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- Notes Table
-CREATE TABLE notes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticket_id VARCHAR(32) NOT NULL,
-    note_text TEXT NOT NULL,
-    author VARCHAR(100) NOT NULL DEFAULT 'Support Agent',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ticket_id) REFERENCES tickets(ticket_id) ON DELETE CASCADE
-);
-```
-Complete DDL script is available in [`database/schema.sql`](database/schema.sql).
-
----
-
-## Quickstart & Local Setup
+## Local Development Setup
 
 ### Prerequisites
-- **Python 3.10+** (tested on 3.11 / 3.14)
 - **Node.js 18+** & **npm**
+- **Python 3.10+** (Python 3.12 recommended)
 
-### 1. Backend Setup
+### 1. Clone the Repository
 ```bash
-# Navigate to backend directory
-cd backend
+git clone https://github.com/sameer-ansari/ticket-crm.git
+cd ticket-crm
+```
+
+### 2. Backend Setup
+```bash
+# Optional: Create and activate virtual environment
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
 
 # Install Python dependencies
 pip install -r requirements.txt
 
-# (Optional) Seed realistic demo tickets and notes
-python -m app.database.init_db
-
-# Run automated backend test suite
-python tests/test_api.py
+# Run automated test suites
+python backend/tests/test_api.py
+python backend/tests/test_vercel_routing.py
 
 # Start FastAPI development server
-python -m uvicorn main:app --reload --port 8000
+npm run backend
+# Or directly:
+python main.py
 ```
-Backend will be live at: `http://localhost:8000`  
-Swagger UI docs: `http://localhost:8000/docs`
+FastAPI server will be running at `http://localhost:8000`  
+Interactive Swagger documentation: `http://localhost:8000/docs`
 
----
-
-### 2. Frontend Setup
+### 3. Frontend Setup
 ```bash
-# In a separate terminal, navigate to frontend directory
-cd frontend
-
-# Install Node dependencies
-npm install
+# In a separate terminal tab:
+npm run install:frontend
 
 # Start Vite development server
 npm run dev
 ```
-Frontend will be live at: `http://localhost:5173`
+Frontend interface will be available at `http://localhost:5173`. Vite automatically proxies `/api` requests to `http://localhost:8000`.
 
 ---
 
-## REST API Summary
+## Environment Variables
 
-Full documentation is available in [`docs/api_documentation.md`](docs/api_documentation.md).
+Copy `.env.example` to `.env` in the root directory:
 
-| Method | Endpoint | Description | Request / Query | Response |
-|---|---|---|---|---|
-| `POST` | `/api/tickets` | Create a ticket | `{ customer_name, customer_email, subject, description }` | `{ ticket_id, created_at }` |
-| `GET` | `/api/tickets` | List tickets | `?status=Open&search=query` | `[{ ticket_id, customer_name, subject, status, created_at, ... }]` |
-| `GET` | `/api/tickets/{ticket_id}` | Get ticket details | N/A | `{ ticket_id, customer_name, subject, description, status, notes }` |
-| `PUT` | `/api/tickets/{ticket_id}` | Update status & notes | `{ status, notes }` | `{ success: true, updated_at }` |
-| `POST` | `/api/tickets/{ticket_id}/notes` | Append note | `{ note_text }` | `{ id, ticket_id, note_text, author, created_at }` |
-| `GET` | `/api/tickets/stats/summary` | Aggregate metrics | N/A | `{ total, open, in_progress, closed }` |
+```bash
+cp .env.example .env
+```
 
----
+| Variable | Required | Description | Example |
+|---|---|---|---|
+| `DATABASE_URL` | Production | Supabase PostgreSQL URI (use port 6543 Transaction Pooler) | `postgresql://postgres.[REF]:[PASS]@aws-0-[REGION].pooler.supabase.com:6543/postgres?sslmode=require` |
+| `ENVIRONMENT` | Optional | Deployment environment (`production` or `development`) | `production` |
+| `VITE_API_URL` | Optional | Custom backend URL. On Vercel, leave empty to auto-route via `/api`. | `http://localhost:8000/api` |
 
-## Railway Deployment
-
-The repository is configured as a single Railway service. [`Dockerfile`](Dockerfile) builds the React frontend and runs FastAPI, which serves both the SPA and `/api/*` routes from the same origin. [`railway.json`](railway.json) configures the Docker builder and `/health` health check.
-
-1. Create a new Railway project and deploy this repository.
-2. Add `DATABASE_URL` as a Railway variable. Use a Railway PostgreSQL or Supabase PostgreSQL connection string for persistent production data.
-3. Redeploy and open the generated public domain. The health check is available at `/health` and API documentation at `/docs`.
-
-SQLite remains available for local development, but Railway containers have ephemeral filesystems, so it should not be used as the production database.
-
-**Docker:** Run the complete app containerized:
-  ```bash
-  docker build -t support-crm .
-  docker run -p 8000:8000 support-crm
-  ```
+> [!TIP]
+> If `DATABASE_URL` is omitted locally, TicketlyCRM defaults to the bundled SQLite database at `backend/database/support_crm.db`. On Vercel previews without `DATABASE_URL`, it automatically utilizes an ephemeral copy in `/tmp` to prevent filesystem permission errors.
 
 ---
 
-## Submission Checklist
+## Deployment Instructions for Vercel
 
-- [x] **Full-Stack Application**: FastAPI backend, SQLite database, React 18 frontend.
-- [x] **Core Features**:
-  - [x] Create Tickets (with auto ID generation and validation)
-  - [x] List All Tickets (clean UI, responsive)
-  - [x] Search Functionality (live multi-field search across ID, name, email, subject, description)
-  - [x] Filter by Status (Open, In Progress, Closed)
-  - [x] View & Update Tickets (status toggle, chronological team notes)
-- [x] **Standout Features**: Priority SLA tags, live debounce, CSV export, realistic seed data.
-- [x] **API & Schemas**: Clean 2-table schema in `database/schema.sql`, OpenAPI documentation in `docs/api_documentation.md`.
-- [x] **Tests**: Automated integration test suite passing in `backend/tests/test_api.py`.
-- [x] **Configuration**: `.env.example`, `.gitignore`, `railway.json`, and `Dockerfile`.
-- [x] **Demo Video**: Stored in `demo-video/demo.mp4`.
+TicketlyCRM is fully optimized for **Vercel** with zero complex setup.
+
+### Option A: Deploy via Vercel Dashboard (Recommended)
+
+1. **Push your repository** to GitHub, GitLab, or Bitbucket.
+2. Go to [Vercel Dashboard](https://vercel.com/dashboard) and click **"Add New Project"**.
+3. **Import** the `ticket-crm` repository.
+4. The project settings are automatically read from [`vercel.json`](vercel.json):
+   - **Framework Preset**: Other / Vite
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `frontend/dist`
+   - **Install Command**: `npm install --prefix frontend`
+5. **Add Environment Variable**:
+   - Key: `DATABASE_URL`
+   - Value: Your Supabase PostgreSQL Connection String (Transaction Pooler port 6543)
+6. Click **Deploy**. Vercel will build the frontend assets, configure `@vercel/python` for `api/index.py`, and assign a live production URL (e.g., `https://your-project.vercel.app`).
+
+### Option B: Deploy via Vercel CLI
+
+```bash
+# Install Vercel CLI if not already installed
+npm install -g vercel
+
+# Log in to your Vercel account
+vercel login
+
+# Deploy to preview
+vercel
+
+# Deploy to production with environment variables
+vercel --prod
+```
+
+---
+
+## Screenshots Section Placeholder
+
+> *Screenshots will be added here showcasing the Dashboard, Ticket Creation, Real-Time Search, and Mobile Responsive Views.*
+
+| Overview Dashboard | Ticket Details & Activity |
+|:---:|:---:|
+| *(Add Dashboard Screenshot)* | *(Add Ticket Details Screenshot)* |
+
+| Create Ticket Form | Analytics & Reporting |
+|:---:|:---:|
+| *(Add Create Ticket Screenshot)* | *(Add Analytics Screenshot)* |
+
+---
+
+## Future Improvements
+
+- [ ] **Role-Based Access Control (RBAC)**: Fine-grained permissions for Agents, Admins, and Team Leads.
+- [ ] **Email Ingestion & Webhooks**: Automatic ticket generation from incoming customer support emails.
+- [ ] **Real-time Collaboration**: WebSocket or Server-Sent Events (SSE) updates for ticket updates and agent typing indicators.
+- [ ] **AI-Powered Response Suggestions**: Integration with Gemini API to propose automated resolution replies based on past tickets.
+- [ ] **Customer Portal**: Dedicated self-service ticket status tracking portal for external customers.
