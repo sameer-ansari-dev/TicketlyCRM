@@ -12,7 +12,7 @@ def get_utc_now():
 class Note(Base):
     __tablename__ = "notes"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     ticket_id = Column(
         String(32),
         ForeignKey("tickets.ticket_id", ondelete="CASCADE"),
@@ -21,6 +21,6 @@ class Note(Base):
     )
     note_text = Column(Text, nullable=False)
     author = Column(String(100), default="Support Agent", nullable=False)
-    created_at = Column(DateTime, default=get_utc_now, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False, index=True)
 
     ticket = relationship("Ticket", back_populates="notes")

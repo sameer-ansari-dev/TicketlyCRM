@@ -16,7 +16,7 @@ from app.schemas.note_schema import NoteCreate, NoteResponse
 from app.services import ticket_service
 
 router = APIRouter(
-    prefix="/api/tickets",
+    prefix="/tickets",
     tags=["Tickets"]
 )
 

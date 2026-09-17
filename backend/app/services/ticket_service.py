@@ -27,10 +27,14 @@ def create_ticket(db: Session, ticket_in: TicketCreate) -> Ticket:
         created_at=now,
         updated_at=now,
     )
-    db.add(ticket)
-    db.commit()
-    db.refresh(ticket)
-    return ticket
+    try:
+        db.add(ticket)
+        db.commit()
+        db.refresh(ticket)
+        return ticket
+    except Exception:
+        db.rollback()
+        raise
 
 
 def get_tickets(
@@ -97,9 +101,13 @@ def update_ticket(
                     )
                     db.add(note)
 
-    db.commit()
-    db.refresh(ticket)
-    return ticket.updated_at
+    try:
+        db.commit()
+        db.refresh(ticket)
+        return ticket.updated_at
+    except Exception:
+        db.rollback()
+        raise
 
 
 def add_note_to_ticket(
@@ -120,10 +128,14 @@ def add_note_to_ticket(
         created_at=now,
     )
     ticket.updated_at = now
-    db.add(note)
-    db.commit()
-    db.refresh(note)
-    return note
+    try:
+        db.add(note)
+        db.commit()
+        db.refresh(note)
+        return note
+    except Exception:
+        db.rollback()
+        raise
 
 
 def get_ticket_stats(db: Session) -> dict:

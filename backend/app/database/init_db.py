@@ -2,6 +2,11 @@ import os
 import sys
 from datetime import datetime, timezone
 
+# Ensure backend directory is in sys.path
+backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 from app.database.database import engine, Base, SessionLocal
 from app.models.ticket import Ticket
 from app.models.note import Note
@@ -81,8 +86,9 @@ def init_database():
             print("Seeding database with sample tickets...")
             now = datetime.now(timezone.utc)
             for t_data in SAMPLE_TICKETS:
-                notes_data = t_data.pop("notes", [])
-                ticket = Ticket(**t_data, created_at=now, updated_at=now)
+                item = dict(t_data)
+                notes_data = item.pop("notes", [])
+                ticket = Ticket(**item, created_at=now, updated_at=now)
                 db.add(ticket)
                 db.flush()
 

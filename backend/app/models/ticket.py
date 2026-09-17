@@ -12,7 +12,7 @@ def get_utc_now():
 class Ticket(Base):
     __tablename__ = "tickets"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     ticket_id = Column(String(32), unique=True, index=True, nullable=False)
     customer_name = Column(String(255), nullable=False, index=True)
     customer_email = Column(String(255), nullable=False, index=True)
@@ -20,8 +20,8 @@ class Ticket(Base):
     description = Column(Text, nullable=False)
     status = Column(String(50), default="Open", index=True, nullable=False)
     priority = Column(String(20), default="Medium", nullable=False)  # Low, Medium, High, Urgent
-    created_at = Column(DateTime, default=get_utc_now, nullable=False, index=True)
-    updated_at = Column(DateTime, default=get_utc_now, onupdate=get_utc_now, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False, index=True)
+    updated_at = Column(DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False)
 
     # Relational link to Notes
     notes = relationship(
