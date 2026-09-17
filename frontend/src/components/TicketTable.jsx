@@ -84,7 +84,7 @@ export default function TicketTable({ tickets, loading, error, onResetFilters })
         <span>
           Showing <strong className="text-slate-800">{tickets.length}</strong> ticket{tickets.length === 1 ? "" : "s"}
         </span>
-        <span className="text-[11px] text-slate-400">Live SQLite Database</span>
+              <span className="text-[11px] text-slate-400">Live Supabase PostgreSQL Database</span>
       </div>
     </div>
   );

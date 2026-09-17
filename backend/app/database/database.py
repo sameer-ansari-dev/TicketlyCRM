@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -156,3 +156,16 @@ def test_connection():
             "url": get_masked_db_url()
         }
 
+
+def ensure_ticket_priority_schema():
+    """Apply the small, backwards-compatible priority migration without an ORM migration tool."""
+    inspector = inspect(engine)
+    if "tickets" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("tickets")}
+    with engine.begin() as connection:
+        if "priority" not in columns:
+            connection.execute(text("ALTER TABLE tickets ADD COLUMN priority VARCHAR(20) NOT NULL DEFAULT 'Medium'"))
+        # The original UI used Urgent. Preserve its meaning under the new Critical label.
+        connection.execute(text("UPDATE tickets SET priority = 'Critical' WHERE priority = 'Urgent'"))

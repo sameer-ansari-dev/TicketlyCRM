@@ -47,7 +47,7 @@ def run_tests():
             customer_email="barry@starlabs.org",
             subject="Particle accelerator sensor latency",
             description="Tachyon sensor reporting high latency spikes during calibration.",
-            priority="Urgent"
+priority="Critical"
         )
         created = create_ticket_endpoint(new_ticket, db=db)
         print(f"   Created Ticket: {created.ticket_id} at {created.created_at}")

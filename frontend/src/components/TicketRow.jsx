@@ -16,7 +16,7 @@ export default function TicketRow({ ticket, isEven = false }) {
   };
 
   const priorityStyles = {
-    Urgent: "bg-rose-50 text-rose-700 border-rose-200",
+    Critical: "bg-rose-50 text-rose-700 border-rose-200",
     High: "bg-orange-50 text-orange-700 border-orange-200",
     Medium: "bg-blue-50 text-blue-700 border-blue-200",
     Low: "bg-slate-100 text-slate-600 border-slate-200",

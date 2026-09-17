@@ -17,7 +17,13 @@ import {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
-  const [stats, setStats] = useState({ total: 0, open: 0, in_progress: 0, closed: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    open: 0,
+    in_progress: 0,
+    closed: 0,
+    priorities: { Low: 0, Medium: 0, High: 0, Critical: 0 },
+  });
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -140,6 +146,35 @@ export default function Dashboard() {
           onClick={() => handleCardClick("Closed")}
         />
       </div>
+
+      <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Priority workload</h2>
+            <p className="text-xs text-slate-500">Focus urgent customer impact first.</p>
+          </div>
+          <Link to="/tickets?sort=priority" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+            View priority queue
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            ["Critical", "bg-rose-50 border-rose-200 text-rose-700"],
+            ["High", "bg-orange-50 border-orange-200 text-orange-700"],
+            ["Medium", "bg-blue-50 border-blue-200 text-blue-700"],
+            ["Low", "bg-slate-100 border-slate-200 text-slate-700"],
+          ].map(([priority, colors]) => (
+            <button
+              key={priority}
+              onClick={() => navigate(`/tickets?priority=${priority}&sort=priority`)}
+              className={`rounded-lg border px-4 py-3 text-left transition-colors hover:brightness-95 ${colors}`}
+            >
+              <span className="block text-[11px] font-bold uppercase tracking-wider">{priority}</span>
+              <span className="mt-1 block text-2xl font-bold">{stats.priorities?.[priority] || 0}</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Quick Action Banner */}
       <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">

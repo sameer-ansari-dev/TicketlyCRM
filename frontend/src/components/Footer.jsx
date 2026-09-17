@@ -7,7 +7,7 @@ export default function Footer() {
           <span>TicketlyCRM &copy; {new Date().getFullYear()} TicketlyCRM Technologies</span>
         </div>
         <p className="text-xs text-slate-500">
-          Built with React &bull; Tailwind CSS &bull; FastAPI &bull; SQLite
+        Built with React &bull; Tailwind CSS &bull; FastAPI &bull; Supabase PostgreSQL
         </p>
       </div>
     </footer>

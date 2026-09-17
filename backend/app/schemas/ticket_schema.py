@@ -1,7 +1,10 @@
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, EmailStr, Field
 from app.schemas.note_schema import NoteResponse
+
+
+TicketPriority = Literal["Low", "Medium", "High", "Critical"]
 
 
 class TicketBase(BaseModel):
@@ -9,7 +12,7 @@ class TicketBase(BaseModel):
     customer_email: EmailStr = Field(..., description="Valid customer email address")
     subject: str = Field(..., min_length=3, max_length=255, description="Brief summary / title of support issue")
     description: str = Field(..., min_length=5, description="Full details of customer inquiry or bug report")
-    priority: Optional[str] = Field("Medium", description="Triage priority level: Low, Medium, High, Urgent")
+    priority: TicketPriority = Field("Medium", description="Triage priority level: Low, Medium, High, Critical")
 
 
 class TicketCreate(TicketBase):
@@ -31,7 +34,7 @@ class TicketListItem(BaseModel):
     subject: str
     description: Optional[str] = None
     status: str
-    priority: Optional[str] = "Medium"
+    priority: TicketPriority = "Medium"
     created_at: datetime
 
     class Config:
@@ -45,7 +48,7 @@ class TicketDetailResponse(BaseModel):
     subject: str
     description: str
     status: str
-    priority: Optional[str] = "Medium"
+    priority: TicketPriority = "Medium"
     created_at: datetime
     updated_at: datetime
     notes: List[NoteResponse] = []
@@ -56,6 +59,7 @@ class TicketDetailResponse(BaseModel):
 
 class TicketUpdate(BaseModel):
     status: Optional[str] = Field(None, description="Updated ticket status: Open, In Progress, Closed")
+    priority: Optional[TicketPriority] = Field(None, description="Updated priority: Low, Medium, High, Critical")
     notes: Optional[Union[str, List[str]]] = Field(None, description="Optional note text or list of notes to append")
 
 
@@ -69,3 +73,4 @@ class StatsResponse(BaseModel):
     open: int
     in_progress: int
     closed: int
+    priorities: Dict[TicketPriority, int]

@@ -33,8 +33,14 @@ export const getTickets = async (params = {}) => {
   if (params.status && params.status !== "All") {
     cleanParams.status = params.status;
   }
+  if (params.priority) {
+    cleanParams.priority = params.priority;
+  }
   if (params.search && params.search.trim()) {
     cleanParams.search = params.search.trim();
+  }
+  if (params.sort) {
+    cleanParams.sort = params.sort;
   }
 
   const response = await API.get("/tickets", { params: cleanParams });
@@ -63,6 +69,11 @@ export const addTicketNote = async (ticketId, noteData) => {
 
 export const getTicketStats = async () => {
   const response = await API.get("/tickets/stats/summary");
+  return response.data;
+};
+
+export const getSystemHealth = async () => {
+  const response = await API.get("/health");
   return response.data;
 };
 

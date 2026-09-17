@@ -19,7 +19,7 @@ SAMPLE_TICKETS = [
         "subject": "Payment gateway timeout on checkout",
         "description": "Customer encountered a gateway timeout (HTTP 504) while attempting an annual subscription renewal via Visa card.",
         "status": "In Progress",
-        "priority": "Urgent",
+"priority": "Critical",
         "notes": [
             {"note_text": "Investigated Stripe webhooks. Timeout originated from upstream card processor.", "author": "Alex Dev"},
             {"note_text": "Customer contacted to confirm retry status.", "author": "Sarah Agent"}
@@ -57,7 +57,7 @@ SAMPLE_TICKETS = [
         "subject": "SSO Login redirects to error page",
         "description": "Okta SAML assertion is missing the email claim attribute after recent IdP cert rotation.",
         "status": "In Progress",
-        "priority": "Urgent",
+"priority": "Critical",
         "notes": [
             {"note_text": "Inspected SAML metadata XML; updated ACS URL and cert fingerprint.", "author": "Security Lead"}
         ]

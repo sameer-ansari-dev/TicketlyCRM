@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, desc, func
+from sqlalchemy import case, or_, desc, func
 
 from app.models.ticket import Ticket
 from app.models.note import Note
@@ -40,12 +40,17 @@ def create_ticket(db: Session, ticket_in: TicketCreate) -> Ticket:
 def get_tickets(
     db: Session,
     status: Optional[str] = None,
-    search: Optional[str] = None
+    priority: Optional[str] = None,
+    search: Optional[str] = None,
+    sort: str = "newest",
 ) -> List[Ticket]:
     query = db.query(Ticket)
 
     if status and status != "All":
         query = query.filter(Ticket.status == status)
+
+    if priority:
+        query = query.filter(Ticket.priority == priority)
 
     if search and search.strip():
         term = f"%{search.strip()}%"
@@ -58,6 +63,16 @@ def get_tickets(
                 Ticket.ticket_id.ilike(term),
             )
         )
+
+    if sort == "priority":
+        priority_order = case(
+            (Ticket.priority == "Critical", 4),
+            (Ticket.priority == "High", 3),
+            (Ticket.priority == "Medium", 2),
+            (Ticket.priority == "Low", 1),
+            else_=0,
+        )
+        return query.order_by(desc(priority_order), desc(Ticket.created_at)).all()
 
     return query.order_by(desc(Ticket.created_at)).all()
 
@@ -78,6 +93,8 @@ def update_ticket(
     now = get_utc_now()
     if payload.status:
         ticket.status = payload.status
+    if payload.priority:
+        ticket.priority = payload.priority
 
     ticket.updated_at = now
 
@@ -143,10 +160,15 @@ def get_ticket_stats(db: Session) -> dict:
     open_count = db.query(func.count(Ticket.id)).filter(Ticket.status == "Open").scalar() or 0
     in_progress = db.query(func.count(Ticket.id)).filter(Ticket.status == "In Progress").scalar() or 0
     closed = db.query(func.count(Ticket.id)).filter(Ticket.status == "Closed").scalar() or 0
+    priority_counts = {
+        priority: db.query(func.count(Ticket.id)).filter(Ticket.priority == priority).scalar() or 0
+        for priority in ("Low", "Medium", "High", "Critical")
+    }
 
     return {
         "total": total,
         "open": open_count,
         "in_progress": in_progress,
         "closed": closed,
+        "priorities": priority_counts,
     }

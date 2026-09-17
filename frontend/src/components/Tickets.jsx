@@ -19,12 +19,16 @@ export default function Tickets() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get("search") || "";
   const initialStatus = searchParams.get("status") || "";
+  const initialPriority = searchParams.get("priority") || "";
+  const initialSort = searchParams.get("sort") || "newest";
 
   const [tickets, setTickets] = useState([]);
   const [stats, setStats] = useState({ total: 0, open: 0, in_progress: 0, closed: 0 });
   const [search, setSearch] = useState(initialSearch);
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [status, setStatus] = useState(initialStatus);
+  const [priority, setPriority] = useState(initialPriority);
+  const [sort, setSort] = useState(initialSort);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -45,10 +49,12 @@ export default function Tickets() {
       const params = {};
       if (search.trim()) params.search = search.trim();
       if (status) params.status = status;
+      if (priority) params.priority = priority;
+      if (sort !== "newest") params.sort = sort;
       setSearchParams(params, { replace: true });
     }, 250);
     return () => clearTimeout(timer);
-  }, [search, status, setSearchParams]);
+  }, [search, status, priority, sort, setSearchParams]);
 
   // Load metrics
   const loadStats = useCallback(async () => {
@@ -72,7 +78,9 @@ export default function Tickets() {
     try {
       const data = await getTickets({
         status: status || undefined,
+        priority: priority || undefined,
         search: debouncedSearch || undefined,
+        sort,
       });
       setTickets(data);
     } catch (err) {
@@ -83,7 +91,7 @@ export default function Tickets() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [status, debouncedSearch]);
+  }, [status, priority, debouncedSearch, sort]);
 
   useEffect(() => {
     loadTickets();
@@ -116,6 +124,8 @@ export default function Tickets() {
   const handleResetFilters = () => {
     setSearch("");
     setStatus("");
+    setPriority("");
+    setSort("newest");
     setSearchParams({}, { replace: true });
   };
 
@@ -207,9 +217,32 @@ export default function Tickets() {
       </div>
 
       {/* Search Bar & Filter Controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-6">
         <SearchBar search={search} setSearch={setSearch} />
-        <StatusFilter status={status} setStatus={setStatus} stats={stats} />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <StatusFilter status={status} setStatus={setStatus} stats={stats} />
+          <select
+            value={priority}
+            onChange={(event) => setPriority(event.target.value)}
+            aria-label="Filter tickets by priority"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">All priorities</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+            aria-label="Sort tickets"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="newest">Newest first</option>
+            <option value="priority">Priority: Critical first</option>
+          </select>
+        </div>
       </div>
 
       {/* Ticket Table */}

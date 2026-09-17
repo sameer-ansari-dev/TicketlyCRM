@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
+import { getSystemHealth } from "../js/api";
 import toast from "react-hot-toast";
 import {
   Settings as SettingsIcon,
   User,
   Shield,
-  Database,
   CheckCircle2,
+  CircleAlert,
   Save,
   Server,
 } from "lucide-react";
@@ -16,6 +17,41 @@ export default function Settings() {
   const [ticketView, setTicketView] = useState("all");
   const [autoRefresh, setAutoRefresh] = useState("30");
   const [emailAlerts, setEmailAlerts] = useState(true);
+  const [health, setHealth] = useState(null);
+  const [healthLoading, setHealthLoading] = useState(true);
+  const [lastChecked, setLastChecked] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkHealth = async () => {
+      try {
+        const response = await getSystemHealth();
+        if (isMounted) setHealth(response);
+      } catch {
+        if (isMounted) {
+          setHealth({
+            api: "unavailable",
+            database: "disconnected",
+            database_type: "Supabase PostgreSQL",
+            version: "1.0.0",
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setLastChecked(new Date());
+          setHealthLoading(false);
+        }
+      }
+    };
+
+    checkHealth();
+    const refreshTimer = window.setInterval(checkHealth, 30_000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -159,44 +195,66 @@ export default function Settings() {
 
         {/* System & Backend Status */}
         <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
-            <Server className="w-4 h-4 text-blue-600" />
-            Backend & Database Health
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                API Service
-              </p>
-              <p className="text-sm font-bold text-slate-900 mt-1">FastAPI REST</p>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 mt-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Operational
-              </span>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Database Engine
-              </p>
-              <p className="text-sm font-bold text-slate-900 mt-1">SQLite 3.x</p>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 mt-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Connected
-              </span>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Application
-              </p>
-              <p className="text-sm font-bold text-slate-900 mt-1">TicketlyCRM</p>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-blue-600 mt-1">
-                <Database className="w-3.5 h-3.5 text-blue-600" /> Version 1.0
-              </span>
-            </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Server className="w-4 h-4 text-blue-600" />
+              Backend & Database Health
+            </h2>
+            <p className="text-xs text-slate-400" aria-live="polite">
+              {lastChecked ? `Last checked ${lastChecked.toLocaleTimeString()}` : "Checking system health..."}
+            </p>
           </div>
+
+          {healthLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" aria-label="Loading system health">
+              {["api", "database", "application"].map((card) => (
+                <div key={card} className="h-28 rounded-xl bg-slate-100 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <HealthCard
+                label="API Service"
+                title="FastAPI REST API"
+                description="RESTful backend powered by FastAPI"
+                status={health?.api === "operational" ? "Operational" : "Unavailable"}
+                healthy={health?.api === "operational"}
+              />
+              <HealthCard
+                label="Database Engine"
+                title={health?.database_type || "Supabase PostgreSQL"}
+                description="Cloud-hosted PostgreSQL Database"
+                status={health?.database === "connected" ? "Connected" : "Disconnected"}
+                healthy={health?.database === "connected"}
+              />
+              <HealthCard
+                label="Application"
+                title="TicketlyCRM"
+                description={`Version v${health?.version || "1.0.0"}`}
+                status="Live"
+                healthy
+              />
+            </div>
+          )}
         </div>
       </div>
     </main>
+  );
+}
+
+function HealthCard({ label, title, description, status, healthy }) {
+  const StatusIcon = healthy ? CheckCircle2 : CircleAlert;
+  const statusColor = healthy ? "text-emerald-700" : "text-rose-700";
+  const iconColor = healthy ? "text-emerald-600" : "text-rose-600";
+
+  return (
+    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="text-sm font-bold text-slate-900 mt-1 truncate" title={title}>{title}</p>
+      <p className="text-xs text-slate-500 mt-1 min-h-5">{description}</p>
+      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold mt-2 ${statusColor}`}>
+        <StatusIcon className={`w-3.5 h-3.5 ${iconColor}`} /> {status}
+      </span>
+    </div>
   );
 }

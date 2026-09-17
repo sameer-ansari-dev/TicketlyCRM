@@ -67,7 +67,7 @@ export default function Analytics() {
     acc[p] = (acc[p] || 0) + 1;
     return acc;
   }, {});
-  const priorityData = ["Urgent", "High", "Medium", "Low"].map((name) => ({ name, tickets: priorityCounts[name] || 0 }));
+  const priorityData = ["Critical", "High", "Medium", "Low"].map((name) => ({ name, tickets: priorityCounts[name] || 0 }));
 
   return (
     <main className="page-container">
@@ -230,9 +230,9 @@ export default function Analytics() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-rose-50 p-3.5 rounded-xl border border-rose-200">
-                  <span className="text-[11px] font-bold uppercase text-rose-700">Urgent</span>
+                  <span className="text-[11px] font-bold uppercase text-rose-700">Critical</span>
                   <p className="text-2xl font-extrabold text-rose-900 mt-1">
-                    {priorityCounts["Urgent"] || 0}
+                    {priorityCounts["Critical"] || 0}
                   </p>
                   <span className="text-[10px] text-rose-600 mt-0.5 block font-medium">&lt; 2h target SLA</span>
                 </div>

@@ -19,7 +19,7 @@ class Ticket(Base):
     subject = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     status = Column(String(50), default="Open", index=True, nullable=False)
-    priority = Column(String(20), default="Medium", nullable=False)  # Low, Medium, High, Urgent
+    priority = Column(String(20), default="Medium", nullable=False, index=True)  # Low, Medium, High, Critical
     created_at = Column(DateTime(timezone=True), default=get_utc_now, nullable=False, index=True)
     updated_at = Column(DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False)
 

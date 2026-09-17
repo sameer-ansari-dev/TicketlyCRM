@@ -158,7 +158,7 @@ export default function TicketDetails() {
   };
 
   const priorityStyles = {
-    Urgent: "text-rose-700 bg-rose-50 border-rose-200",
+    Critical: "text-rose-700 bg-rose-50 border-rose-200",
     High: "text-amber-800 bg-amber-50 border-amber-200",
     Medium: "text-blue-700 bg-blue-50 border-blue-200",
     Low: "text-slate-600 bg-slate-100 border-slate-200",

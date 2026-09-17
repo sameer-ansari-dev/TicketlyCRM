@@ -56,10 +56,12 @@ def create_ticket_endpoint(
 )
 def list_tickets_endpoint(
     status: Optional[str] = Query(None, description="Filter by status: Open, In Progress, Closed"),
+    priority: Optional[str] = Query(None, description="Filter by priority: Low, Medium, High, Critical"),
     search: Optional[str] = Query(None, description="Search term across name, email, subject, description, ticket ID"),
+    sort: str = Query("newest", pattern="^(newest|priority)$", description="Sort by newest or priority"),
     db: Session = Depends(get_db)
 ):
-    return ticket_service.get_tickets(db, status=status, search=search)
+    return ticket_service.get_tickets(db, status=status, priority=priority, search=search, sort=sort)
 
 
 @router.get(

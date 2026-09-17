@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime, timezone
 
 # Ensure backend directory is in sys.path
 backend_dir = os.path.dirname(os.path.abspath(__file__))
@@ -12,11 +13,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError, OperationalError, IntegrityError
 
 from app.api.tickets import router as ticket_router
-from app.database.database import engine, Base, test_connection
+from app.database.database import engine, Base, IS_POSTGRES, ensure_ticket_priority_schema, test_connection
 
 # Safe table creation on startup (logs warning instead of crashing on temporary network glitch)
 try:
     Base.metadata.create_all(bind=engine)
+    ensure_ticket_priority_schema()
 except Exception as exc:
     print(f"[Warning] Could not auto-create database tables on startup: {exc}")
 
@@ -87,10 +89,11 @@ app.include_router(ticket_router)
 def health_check():
     db_status = test_connection()
     return {
-        "status": "healthy" if db_status.get("connected") else "degraded",
-        "service": "TicketlyCRM Backend",
+        "api": "operational",
+        "database": "connected" if db_status.get("connected") else "disconnected",
+        "database_type": "Supabase PostgreSQL" if IS_POSTGRES else db_status.get("engine", "Database"),
         "version": "1.0.0",
-        "database": db_status
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
