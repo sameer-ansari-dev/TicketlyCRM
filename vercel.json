@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "node -e \"const {execSync}=require('child_process'); if(require('fs').existsSync('frontend/package.json')){execSync('npm --prefix frontend install',{stdio:'inherit'})}else{execSync('npm install',{stdio:'inherit'})}\"",
-  "buildCommand": "node -e \"const {execSync}=require('child_process'); if(require('fs').existsSync('frontend/package.json')){execSync('npm --prefix frontend run build',{stdio:'inherit'})}else{execSync('npm run build',{stdio:'inherit'})}\" && node -e \"const fs=require('fs'); if(fs.existsSync('dist')&&!fs.existsSync('frontend/dist')){fs.cpSync('dist','frontend/dist',{recursive:true})}else if(fs.existsSync('frontend/dist')&&!fs.existsSync('dist')){fs.cpSync('frontend/dist','dist',{recursive:true})}\"",
-  "outputDirectory": "dist",
+  "installCommand": "npm --prefix frontend install",
+  "buildCommand": "npm --prefix frontend run build",
+  "outputDirectory": "frontend/dist",
   "functions": {
     "api/index.py": {
       "includeFiles": "backend/**"

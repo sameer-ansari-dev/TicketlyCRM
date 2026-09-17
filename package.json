@@ -2,13 +2,9 @@
   "name": "ticketly-crm",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "frontend"
-  ],
   "scripts": {
-    "postinstall": "node -e \"const {execSync}=require('child_process'); if(require('fs').existsSync('frontend/package.json')){execSync('npm --prefix frontend install',{stdio:'inherit'})}\"",
     "dev": "npm --prefix frontend run dev",
-    "build": "node -e \"const {execSync}=require('child_process'); if(require('fs').existsSync('frontend/package.json')){execSync('npm --prefix frontend install && npm --prefix frontend run build',{stdio:'inherit'})}else{execSync('npm run build',{stdio:'inherit'})}\" && node -e \"const fs=require('fs'); if(fs.existsSync('dist')&&!fs.existsSync('frontend/dist')){fs.cpSync('dist','frontend/dist',{recursive:true})}else if(fs.existsSync('frontend/dist')&&!fs.existsSync('dist')){fs.cpSync('frontend/dist','dist',{recursive:true})}\"",
+    "build": "npm --prefix frontend run build",
     "install:frontend": "npm --prefix frontend install",
     "preview": "npm --prefix frontend run preview",
     "backend": "python main.py",
