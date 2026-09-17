@@ -1,12 +1,16 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+.vercel/
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.env
+.env
+.env.*
+!.env.example
 .venv/
 env/
 venv/
@@ -15,6 +19,8 @@ ENV/
 # Database
 *.db-journal
 database/support_crm.db
+*.sqlite
+*.sqlite3
 
 # Build outputs
 dist/
