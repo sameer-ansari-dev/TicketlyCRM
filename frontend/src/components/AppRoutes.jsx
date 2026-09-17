@@ -15,10 +15,21 @@ const Login = lazy(() => import("./Login"));
 const Signup = lazy(() => import("./Signup"));
 
 function ProtectedRoutes() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
 
+  if (isLoading) return <AuthLoading />;
+
   return user ? <AppShell /> : <Navigate to="/login" replace state={{ from: location }} />;
+}
+
+function AuthLoading() {
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center gap-3 text-sm text-slate-500" role="status">
+      <span className="h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" aria-hidden="true" />
+      Checking your session...
+    </div>
+  );
 }
 
 export default function AppRoutes() {
@@ -43,6 +54,7 @@ export default function AppRoutes() {
           <Route path="/create" element={<Navigate to="/create-ticket" replace />} />
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/ticket/:id" element={<TicketDetails />} />
+          <Route path="/tickets/:id" element={<TicketDetails />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/settings" element={<Settings />} />

@@ -30,6 +30,11 @@ export default function Navbar({ onMenuClick }) {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <header className="sticky top-0 z-40 h-16 border-b border-slate-200 bg-white shadow-sm">
       <div className="h-full px-4 sm:px-6 flex items-center justify-between gap-4">
@@ -96,7 +101,7 @@ export default function Navbar({ onMenuClick }) {
 
           {/* User Profile Avatar with Logout */}
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-100 transition-colors group text-left"
             title={`Signed in as ${user || "Agent"}. Click to sign out.`}
           >

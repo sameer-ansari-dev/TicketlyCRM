@@ -4,12 +4,16 @@ import { ArrowRight, LockKeyhole, UserRound } from "lucide-react";
 import { useAuth } from "./AuthContext";
 
 export default function Login() {
-  const { user, login } = useAuth();
+  const { user, isLoading, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-sm text-slate-500" role="status">Checking your session...</div>;
+  }
 
   if (user) return <Navigate to="/dashboard" replace />;
 
