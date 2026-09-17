@@ -20,9 +20,40 @@ if backend_dir not in sys.path:
 
 # Import FastAPI application
 try:
-    from backend.main import app
+    from backend.main import app as _app
 except ImportError:
-    from main import app  # Fallback if invoked from within backend
+    from main import app as _app  # Fallback if invoked from within backend
 
-# Export app for Vercel ASGI handler
+
+class VercelPathFixMiddleware:
+    """
+    ASGI Middleware that restores the original request path when Vercel's internal
+    rewrites route requests using the destination path (/api/index.py).
+    Extracts the true client path from `x-matched-path` or `x-forwarded-uri`.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http":
+            path = scope.get("path", "")
+            # If Vercel routed to the literal file destination path
+            if path in ("/api/index.py", "/api/index", "/index.py"):
+                headers = dict(scope.get("headers", []))
+                matched = (
+                    headers.get(b"x-matched-path", b"")
+                    or headers.get(b"x-forwarded-uri", b"")
+                    or headers.get(b"x-invoke-path", b"")
+                ).decode("utf-8", errors="ignore")
+
+                if matched:
+                    clean_path = matched.split("?")[0]
+                    if clean_path and clean_path not in ("/api/index.py", "/api/index", "/index.py"):
+                        scope["path"] = clean_path
+
+        await self.app(scope, receive, send)
+
+
+app = VercelPathFixMiddleware(_app)
+
 __all__ = ["app"]

@@ -81,6 +81,8 @@ app.include_router(ticket_router)
 @app.get("/health", tags=["Health"])
 @app.get("/api", tags=["Health"])
 @app.get("/api/health", tags=["Health"])
+@app.get("/api/index.py", tags=["Health"])
+@app.get("/api/index", tags=["Health"])
 def health_check():
     db_status = test_connection()
     return {
