@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 # Ensure backend directory is in sys.path
 backend_dir = os.path.dirname(os.path.abspath(__file__))
@@ -8,7 +9,7 @@ if backend_dir not in sys.path:
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.exc import SQLAlchemyError, OperationalError, IntegrityError
 
 from app.api.tickets import router as ticket_router
@@ -91,6 +92,21 @@ def health_check():
         "version": "1.0.0",
         "database": db_status
     }
+
+
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+if FRONTEND_DIST.is_dir():
+    from starlette.staticfiles import StaticFiles
+
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    async def frontend_fallback(path: str):
+        requested_file = (FRONTEND_DIST / path).resolve()
+        if FRONTEND_DIST in requested_file.parents and requested_file.is_file():
+            return FileResponse(requested_file)
+        return FileResponse(FRONTEND_DIST / "index.html")
 
 
 if __name__ == "__main__":

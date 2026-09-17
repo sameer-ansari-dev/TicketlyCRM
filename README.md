@@ -153,10 +153,17 @@ Full documentation is available in [`docs/api_documentation.md`](docs/api_docume
 
 ---
 
-## Deployment Configuration
+## Railway Deployment
 
-- **Railway.app**: Preconfigured with [`railway.json`](railway.json) using multi-stage Docker build.
-- **Docker**: Run the complete app containerized:
+The repository is configured as a single Railway service. [`Dockerfile`](Dockerfile) builds the React frontend and runs FastAPI, which serves both the SPA and `/api/*` routes from the same origin. [`railway.json`](railway.json) configures the Docker builder and `/health` health check.
+
+1. Create a new Railway project and deploy this repository.
+2. Add `DATABASE_URL` as a Railway variable. Use a Railway PostgreSQL or Supabase PostgreSQL connection string for persistent production data.
+3. Redeploy and open the generated public domain. The health check is available at `/health` and API documentation at `/docs`.
+
+SQLite remains available for local development, but Railway containers have ephemeral filesystems, so it should not be used as the production database.
+
+**Docker:** Run the complete app containerized:
   ```bash
   docker build -t support-crm .
   docker run -p 8000:8000 support-crm
