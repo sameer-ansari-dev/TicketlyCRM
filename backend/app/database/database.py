@@ -39,8 +39,11 @@ def get_database_url() -> str:
 
     if IS_SERVERLESS:
         # In Vercel serverless functions, /var/task is read-only.
-        # Copy the pre-seeded SQLite database to /tmp so writes succeed.
-        tmp_db = "/tmp/support_crm.db"
+        # Copy the pre-seeded SQLite database to system temp directory so writes succeed.
+        import tempfile
+        tmp_dir = tempfile.gettempdir()
+        os.makedirs(tmp_dir, exist_ok=True)
+        tmp_db = os.path.join(tmp_dir, "support_crm.db")
         if not os.path.exists(tmp_db):
             seed_db = os.path.join(database_dir, "support_crm.db")
             if os.path.isfile(seed_db):
@@ -49,7 +52,7 @@ def get_database_url() -> str:
                     shutil.copy2(seed_db, tmp_db)
                 except Exception:
                     pass
-        return f"sqlite:///{tmp_db}"
+        return f"sqlite:///{tmp_db.replace(os.sep, '/')}"
 
     os.makedirs(database_dir, exist_ok=True)
     database_path = os.path.join(database_dir, "support_crm.db")
