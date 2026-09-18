@@ -1,9 +1,13 @@
 import os
 import urllib.parse
+import logging
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from fastapi import HTTPException, status
+
+logger = logging.getLogger("ticketlycrm.database")
 
 # Load environment variables from backend/.env and root .env
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -61,6 +65,11 @@ def get_database_url() -> str:
 
 DATABASE_URL = get_database_url()
 IS_POSTGRES = DATABASE_URL.startswith("postgresql")
+DATABASE_CONFIGURED = bool(
+    os.getenv("DATABASE_URL")
+    or os.getenv("SUPABASE_DATABASE_URL")
+    or (os.getenv("SUPABASE_DB_HOST") and os.getenv("SUPABASE_DB_PASSWORD"))
+)
 
 # Engine Configuration
 connect_args = {}
@@ -91,6 +100,16 @@ engine = create_engine(
     **engine_kwargs
 )
 
+logger.info(
+    "Database engine configured dialect=%s serverless=%s configured=%s supabase_url=%s supabase_key=%s supabase_anon_key=%s",
+    "postgresql" if IS_POSTGRES else "sqlite",
+    IS_SERVERLESS,
+    DATABASE_CONFIGURED,
+    bool(os.getenv("SUPABASE_URL")),
+    bool(os.getenv("SUPABASE_KEY")),
+    bool(os.getenv("SUPABASE_ANON_KEY")),
+)
+
 # Apply SQLite foreign key pragma only if SQLite
 if not IS_POSTGRES:
     @event.listens_for(Engine, "connect")
@@ -113,6 +132,14 @@ def get_db():
     FastAPI dependency yielding a transactional database session.
     Automatically rolls back on uncaught exceptions and closes the session.
     """
+    if IS_SERVERLESS and not DATABASE_CONFIGURED:
+        logger.error("Database configuration is missing in the serverless environment")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database configuration is missing.",
+            headers={"X-Error-Code": "DATABASE_NOT_CONFIGURED"},
+        )
+
     db = SessionLocal()
     try:
         yield db
@@ -149,6 +176,7 @@ def test_connection():
                 "url": get_masked_db_url()
             }
     except Exception as exc:
+        logger.exception("Database connectivity check failed dialect=%s", "postgresql" if IS_POSTGRES else "sqlite")
         return {
             "connected": False,
             "engine": "PostgreSQL (Supabase)" if IS_POSTGRES else "SQLite",

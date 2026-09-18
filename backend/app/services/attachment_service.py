@@ -1,4 +1,5 @@
 import os
+import tempfile
 import uuid
 from pathlib import Path
 
@@ -10,7 +11,13 @@ from app.services.ticket_service import get_ticket_by_id
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx"}
 MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
-UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", Path(__file__).resolve().parents[2] / "static" / "uploads"))
+IS_SERVERLESS = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+DEFAULT_UPLOAD_DIR = (
+    Path(tempfile.gettempdir()) / "ticketlycrm-uploads"
+    if IS_SERVERLESS
+    else Path(__file__).resolve().parents[2] / "static" / "uploads"
+)
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(DEFAULT_UPLOAD_DIR)))
 
 
 async def add_attachment(db: Session, ticket_id: str, upload: UploadFile) -> Attachment:

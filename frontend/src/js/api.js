@@ -1,21 +1,18 @@
 import axios from "axios";
 
-// Auto-detect base API URL:
-// 1. Explicit VITE_API_URL environment variable if provided
-// 2. Relative '/api' if running on a live web host (Vercel deployment)
-// 3. Fallback to 'http://localhost:8000/api' for local development
+// Production requests must stay on the current origin so Vercel rewrites,
+// deployment-protection cookies, and preview URLs work consistently. An
+// explicit VITE_API_URL is only honored during local development.
 const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  if (
+  const isLocalHost =
     typeof window !== "undefined" &&
-    window.location.hostname !== "localhost" &&
-    window.location.hostname !== "127.0.0.1"
-  ) {
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+  if (!isLocalHost) {
     return "/api";
   }
-  return "http://localhost:8000/api";
+
+  return import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 };
 
 const API_BASE_URL = getApiBaseUrl();

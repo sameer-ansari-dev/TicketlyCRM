@@ -1,5 +1,8 @@
 import os
 import sys
+import logging
+import tempfile
+from uuid import uuid4
 from datetime import datetime, timezone
 
 # Ensure backend directory is in sys.path
@@ -14,8 +17,10 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError, OperationalError, IntegrityError
 
 from app.api.tickets import router as ticket_router
-from app.database.database import engine, Base, IS_POSTGRES, ensure_ticket_priority_schema, ensure_ticket_sequence, test_connection
+from app.database.database import engine, Base, IS_POSTGRES, IS_SERVERLESS, ensure_ticket_priority_schema, ensure_ticket_sequence, test_connection
 from app.models.attachment import Attachment  # Registers attachment metadata before create_all.
+
+logger = logging.getLogger("ticketlycrm.api")
 
 # Safe table creation on startup (logs warning instead of crashing on temporary network glitch)
 try:
@@ -23,7 +28,7 @@ try:
     ensure_ticket_priority_schema()
     ensure_ticket_sequence()
 except Exception as exc:
-    print(f"[Warning] Could not auto-create database tables on startup: {exc}")
+    logger.exception("Database schema initialization failed; requests will return a structured database error")
 
 app = FastAPI(
     title="TicketlyCRM API",
@@ -31,38 +36,55 @@ app = FastAPI(
     description="A production-ready Customer Support Management API built for TicketlyCRM with ticket operations, internal notes, search, filtering, and metric tracking."
 )
 
-uploads_dir = os.getenv("UPLOAD_DIR", os.path.join(backend_dir, "static", "uploads"))
+# Vercel deploys application files under the read-only /var/task directory.
+# Runtime uploads must use the serverless temporary directory instead.
+default_upload_dir = (
+    os.path.join(tempfile.gettempdir(), "ticketlycrm-uploads")
+    if IS_SERVERLESS
+    else os.path.join(backend_dir, "static", "uploads")
+)
+uploads_dir = os.getenv("UPLOAD_DIR", default_upload_dir)
 os.makedirs(uploads_dir, exist_ok=True)
+logger.info("Attachment storage initialized serverless=%s path=%s", IS_SERVERLESS, uploads_dir)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 # Global Database Exception Handlers
 @app.exception_handler(OperationalError)
 async def operational_error_handler(request: Request, exc: OperationalError):
+    request_id = request.headers.get("x-vercel-id", uuid4().hex)
+    logger.exception("Database operation failed request_id=%s path=%s", request_id, request.url.path)
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
-            "detail": "Database connection error. Please verify Supabase credentials and network availability.",
-            "error": str(exc.orig) if hasattr(exc, "orig") else str(exc),
+            "detail": "Database service is unavailable. Please try again shortly.",
+            "code": "DATABASE_UNAVAILABLE",
+            "request_id": request_id,
         }
     )
 
 @app.exception_handler(IntegrityError)
 async def integrity_error_handler(request: Request, exc: IntegrityError):
+    request_id = request.headers.get("x-vercel-id", uuid4().hex)
+    logger.exception("Database integrity error request_id=%s path=%s", request_id, request.url.path)
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
-            "detail": "Database constraint violation (duplicate key or foreign key violation).",
-            "error": str(exc.orig) if hasattr(exc, "orig") else str(exc),
+            "detail": "The request conflicts with existing ticket data.",
+            "code": "DATABASE_CONFLICT",
+            "request_id": request_id,
         }
     )
 
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError):
+    request_id = request.headers.get("x-vercel-id", uuid4().hex)
+    logger.exception("Unexpected database error request_id=%s path=%s", request_id, request.url.path)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "detail": "An internal database error occurred.",
-            "error_type": type(exc).__name__,
+            "code": "DATABASE_ERROR",
+            "request_id": request_id,
         }
     )
 
@@ -101,6 +123,7 @@ app.include_router(ticket_router)
 @app.get("/api/index", tags=["Health"])
 def health_check():
     db_status = test_connection()
+    logger.info("Health check database_connected=%s database_type=%s", db_status.get("connected"), db_status.get("engine"))
     return {
         "api": "operational",
         "database": "connected" if db_status.get("connected") else "disconnected",
