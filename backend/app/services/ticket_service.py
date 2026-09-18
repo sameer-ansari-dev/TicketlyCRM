@@ -156,19 +156,15 @@ def add_note_to_ticket(
 
 
 def get_ticket_stats(db: Session) -> dict:
-    total = db.query(func.count(Ticket.id)).scalar() or 0
-    open_count = db.query(func.count(Ticket.id)).filter(Ticket.status == "Open").scalar() or 0
-    in_progress = db.query(func.count(Ticket.id)).filter(Ticket.status == "In Progress").scalar() or 0
-    closed = db.query(func.count(Ticket.id)).filter(Ticket.status == "Closed").scalar() or 0
-    priority_counts = {
-        priority: db.query(func.count(Ticket.id)).filter(Ticket.priority == priority).scalar() or 0
-        for priority in ("Low", "Medium", "High", "Critical")
-    }
+    # One grouped query over the same normalized ticket columns used by the list API.
+    status_counts = dict(db.query(Ticket.status, func.count(Ticket.id)).group_by(Ticket.status).all())
+    priority_counts = dict(db.query(Ticket.priority, func.count(Ticket.id)).group_by(Ticket.priority).all())
+    total = sum(status_counts.values())
 
     return {
         "total": total,
-        "open": open_count,
-        "in_progress": in_progress,
-        "closed": closed,
-        "priorities": priority_counts,
+        "open": status_counts.get("Open", 0),
+        "in_progress": status_counts.get("In Progress", 0),
+        "closed": status_counts.get("Closed", 0),
+        "priorities": {priority: priority_counts.get(priority, 0) for priority in ("Low", "Medium", "High", "Critical")},
     }

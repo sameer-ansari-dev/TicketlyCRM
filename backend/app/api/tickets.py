@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -10,10 +10,11 @@ from app.schemas.ticket_schema import (
     TicketDetailResponse,
     TicketUpdate,
     TicketUpdateResponse,
-    StatsResponse
+    StatsResponse, AttachmentResponse
 )
 from app.schemas.note_schema import NoteCreate, NoteResponse
 from app.services import ticket_service
+from app.services import attachment_service
 
 router = APIRouter(
     prefix="/tickets",
@@ -139,3 +140,17 @@ def add_ticket_note_endpoint(
             detail=f"Ticket '{ticket_id}' not found."
         )
     return note
+
+
+@router.post(
+    "/{ticket_id}/attachments",
+    response_model=AttachmentResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Upload a ticket attachment (JPG, PNG, PDF, DOC, or DOCX; max 10 MB)",
+)
+async def upload_ticket_attachment_endpoint(
+    ticket_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    return await attachment_service.add_attachment(db, ticket_id, file)

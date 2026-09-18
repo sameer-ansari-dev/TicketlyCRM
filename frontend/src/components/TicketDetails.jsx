@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import NoteList from "./NoteList";
-import { getTicketById, updateTicket, addTicketNote } from "../js/api";
+import { getTicketById, updateTicket, addTicketNote, notifyTicketDataChanged, uploadTicketAttachment } from "../js/api";
+import { useTicketRefresh } from "../js/ticketRefresh";
 import toast from "react-hot-toast";
 import {
   ArrowLeft,
@@ -15,6 +16,8 @@ import {
   Calendar,
   MessageSquare,
   Sparkles,
+  Paperclip,
+  Download,
 } from "lucide-react";
 
 export default function TicketDetails() {
@@ -32,9 +35,9 @@ export default function TicketDetails() {
   const [addingNote, setAddingNote] = useState(false);
   const [noteError, setNoteError] = useState(null);
 
-  const loadTicket = useCallback(async () => {
+  const loadTicket = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (!isRefresh) setLoading(true);
       setError(null);
       const data = await getTicketById(id);
       setTicket(data);
@@ -43,13 +46,14 @@ export default function TicketDetails() {
         err.response?.data?.detail || `Ticket '${id}' could not be retrieved.`
       );
     } finally {
-      setLoading(false);
+      if (!isRefresh) setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
     loadTicket();
   }, [loadTicket]);
+  useTicketRefresh(loadTicket);
 
   // Handle status update
   const handleStatusChange = async (newStatus) => {
@@ -64,6 +68,7 @@ export default function TicketDetails() {
         updated_at: res.updated_at,
       }));
       setStatusMessage(`Status updated to "${newStatus}"`);
+      notifyTicketDataChanged();
       toast.success(`Status updated to ${newStatus}`);
       setTimeout(() => setStatusMessage(null), 3000);
     } catch (err) {
@@ -94,12 +99,33 @@ export default function TicketDetails() {
         notes: [newNote, ...(prev.notes || [])],
       }));
       setNoteText("");
+      notifyTicketDataChanged();
       toast.success("Note added");
     } catch (err) {
       toast.error("Failed to add note");
       setNoteError(err.response?.data?.detail || "Failed to add note.");
     } finally {
       setAddingNote(false);
+    }
+  };
+
+  const handleAttachmentUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !ticket) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Attachment must be 10 MB or smaller");
+      event.target.value = "";
+      return;
+    }
+    try {
+      const attachment = await uploadTicketAttachment(ticket.ticket_id, file);
+      setTicket((current) => ({ ...current, attachments: [attachment, ...(current.attachments || [])] }));
+      notifyTicketDataChanged();
+      toast.success("Attachment uploaded");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Attachment upload failed");
+    } finally {
+      event.target.value = "";
     }
   };
 
@@ -298,6 +324,34 @@ export default function TicketDetails() {
               <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
                 {ticket.description}
               </div>
+            </div>
+
+            <div className="border-t border-slate-200 p-6 sm:p-8 bg-white">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Attachments</h3>
+                  <p className="mt-1 text-xs text-slate-500">JPG, PNG, PDF, DOC, or DOCX up to 10 MB.</p>
+                </div>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+                  <Paperclip className="h-3.5 w-3.5" /> Add attachment
+                  <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" onChange={handleAttachmentUpload} />
+                </label>
+              </div>
+              {ticket.attachments?.length ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {ticket.attachments.map((attachment) => (
+                    <div key={attachment.id} className="rounded-lg border border-slate-200 p-3">
+                      {attachment.content_type?.startsWith("image/") && (
+                        <img src={attachment.url} alt={attachment.original_name} className="mb-3 max-h-40 w-full rounded object-contain bg-slate-50" />
+                      )}
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="truncate text-xs font-medium text-slate-700">{attachment.original_name}</span>
+                        <a href={attachment.url} download={attachment.original_name} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800"><Download className="h-3.5 w-3.5" /> Download</a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="text-sm text-slate-500">No attachments yet.</p>}
             </div>
           </div>
 

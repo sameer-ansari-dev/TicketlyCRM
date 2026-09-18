@@ -158,7 +158,7 @@ def test_connection():
 
 
 def ensure_ticket_priority_schema():
-    """Apply the small, backwards-compatible priority migration without an ORM migration tool."""
+    """Apply backwards-compatible data integrity migrations on startup."""
     inspector = inspect(engine)
     if "tickets" not in inspector.get_table_names():
         return
@@ -169,3 +169,38 @@ def ensure_ticket_priority_schema():
             connection.execute(text("ALTER TABLE tickets ADD COLUMN priority VARCHAR(20) NOT NULL DEFAULT 'Medium'"))
         # The original UI used Urgent. Preserve its meaning under the new Critical label.
         connection.execute(text("UPDATE tickets SET priority = 'Critical' WHERE priority = 'Urgent'"))
+        # Historic imports used inconsistent casing and whitespace. Canonical values keep
+        # list filters and summary statistics on the same dataset.
+        connection.execute(text("""
+            UPDATE tickets
+            SET status = CASE lower(trim(status))
+                WHEN 'open' THEN 'Open'
+                WHEN 'in progress' THEN 'In Progress'
+                WHEN 'closed' THEN 'Closed'
+                ELSE status
+            END
+        """))
+
+
+def ensure_ticket_sequence():
+    """Seed the database sequence above every existing TKT-nnnn record exactly once."""
+    inspector = inspect(engine)
+    if "tickets" not in inspector.get_table_names() or "ticket_sequences" not in inspector.get_table_names():
+        return
+
+    with engine.begin() as connection:
+        if IS_POSTGRES:
+            max_number = connection.execute(text("""
+                SELECT COALESCE(MAX(CASE WHEN ticket_id ~ '^TKT-[0-9]+$'
+                    THEN CAST(substring(ticket_id FROM 5) AS INTEGER) END), 1000)
+                FROM tickets
+            """)).scalar() or 1000
+            connection.execute(text("""
+                INSERT INTO ticket_sequences (sequence_key, next_value)
+                VALUES (1, :next_value)
+                ON CONFLICT (sequence_key) DO NOTHING
+            """), {"next_value": int(max_number) + 1})
+        else:
+            rows = connection.execute(text("SELECT ticket_id FROM tickets WHERE ticket_id LIKE 'TKT-%'"))
+            values = [int(row[0][4:]) for row in rows if row[0][4:].isdigit()]
+            connection.execute(text("INSERT OR IGNORE INTO ticket_sequences (sequence_key, next_value) VALUES (1, :next_value)"), {"next_value": (max(values) if values else 1000) + 1})

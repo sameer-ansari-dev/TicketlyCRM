@@ -2,6 +2,7 @@
 node_modules/
 .pnpm-store/
 .vercel/
+frontend/.npm-cache/
 
 # Python
 __pycache__/
@@ -21,6 +22,7 @@ ENV/
 database/support_crm.db
 *.sqlite
 *.sqlite3
+backend/static/uploads/
 
 # Build outputs
 dist/

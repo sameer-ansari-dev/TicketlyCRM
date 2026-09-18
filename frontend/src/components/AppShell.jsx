@@ -8,7 +8,7 @@ export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC] text-slate-900">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="lg:pl-64">
         <Navbar onMenuClick={() => setSidebarOpen(true)} />

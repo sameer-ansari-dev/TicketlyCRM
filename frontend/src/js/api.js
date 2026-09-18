@@ -28,6 +28,27 @@ const API = axios.create({
   timeout: 10000,
 });
 
+export const getApiErrorMessage = (error) => {
+  if (error.response?.data?.detail) {
+    return error.response.data.detail;
+  }
+  if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+    return "The CRM backend took too long to respond. Please try again.";
+  }
+  if (error.code === "ERR_NETWORK" || !error.response) {
+    return "Could not connect to CRM backend API. Start it with `npm run backend` and try again.";
+  }
+  return "The CRM backend returned an unexpected error. Please try again.";
+};
+
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    error.userMessage = getApiErrorMessage(error);
+    return Promise.reject(error);
+  }
+);
+
 export const getTickets = async (params = {}) => {
   const cleanParams = {};
   if (params.status && params.status !== "All") {
@@ -57,6 +78,15 @@ export const createTicket = async (ticketData) => {
   return response.data;
 };
 
+export const uploadTicketAttachment = async (ticketId, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await API.post(`/tickets/${ticketId}/attachments`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
 export const updateTicket = async (ticketId, updateData) => {
   const response = await API.put(`/tickets/${ticketId}`, updateData);
   return response.data;
@@ -75,6 +105,12 @@ export const getTicketStats = async () => {
 export const getSystemHealth = async () => {
   const response = await API.get("/health");
   return response.data;
+};
+
+// Components are mounted independently, so this gives successful mutations an
+// immediate same-tab refresh without coupling screens to a shared cache library.
+export const notifyTicketDataChanged = () => {
+  window.dispatchEvent(new Event("ticketly:tickets-changed"));
 };
 
 export default API;

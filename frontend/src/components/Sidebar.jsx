@@ -27,7 +27,7 @@ export default function Sidebar({ isOpen, onClose }) {
       return location.pathname === "/dashboard" || location.pathname === "/";
     }
     if (path === "/tickets") {
-      return location.pathname === "/tickets" || location.pathname.startsWith("/ticket/");
+      return location.pathname === "/tickets" || location.pathname.startsWith("/ticket/") || location.pathname.startsWith("/tickets/");
     }
     return location.pathname === path;
   };

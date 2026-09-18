@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { createTicket } from "../js/api";
+import { createTicket, notifyTicketDataChanged, uploadTicketAttachment } from "../js/api";
 import toast from "react-hot-toast";
 import {
   ArrowLeft,
@@ -23,6 +23,7 @@ export default function CreateTicket() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successInfo, setSuccessInfo] = useState(null);
+  const [attachment, setAttachment] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,11 +51,26 @@ export default function CreateTicket() {
       setError("Please describe the customer's issue or request.");
       return;
     }
+    if (attachment && attachment.size > 10 * 1024 * 1024) {
+      setError("Attachment must be 10 MB or smaller.");
+      return;
+    }
 
     try {
       setLoading(true);
       const res = await createTicket(formData);
+      if (attachment) {
+        try {
+          await uploadTicketAttachment(res.ticket_id, attachment);
+        } catch (uploadError) {
+          // The ticket has already been committed. Keep that success visible so
+          // a retry cannot accidentally create a second ticket.
+          setError(uploadError.response?.data?.detail || "Ticket was created, but its attachment could not be uploaded.");
+          toast.error("Ticket created, but attachment upload failed");
+        }
+      }
       setSuccessInfo(res);
+      notifyTicketDataChanged();
       toast.success("Ticket created successfully");
 
       // Auto-redirect to the newly created ticket after 1.5s
@@ -203,6 +219,20 @@ export default function CreateTicket() {
                     disabled={loading || successInfo}
                     className="w-full p-4 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600 transition-all leading-relaxed shadow-2xs"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+                    Attachment <span className="normal-case font-normal text-slate-500">(optional, max 10 MB)</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                    disabled={loading || successInfo}
+                    onChange={(event) => setAttachment(event.target.files?.[0] || null)}
+                    className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Screenshot, image, PDF, DOC, or DOCX.</p>
                 </div>
 
                 {/* Action Buttons */}

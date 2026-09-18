@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import StatsCard from "./StatsCard";
 import TicketTable from "./TicketTable";
-import { getTickets, getTicketStats } from "../js/api";
+import { getApiErrorMessage, getTickets, getTicketStats } from "../js/api";
+import { useTicketRefresh } from "../js/ticketRefresh";
 import {
   Clock,
   CheckCircle2,
@@ -44,9 +45,7 @@ export default function Dashboard() {
       setStats(statsData);
       setTickets(ticketsData);
     } catch (err) {
-      setError(
-        err.response?.data?.detail || "Could not connect to CRM backend API."
-      );
+      setError(err.userMessage || getApiErrorMessage(err));
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -56,6 +55,7 @@ export default function Dashboard() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+  useTicketRefresh(loadData);
 
   // Quick navigate to Tickets filtered by status
   const handleCardClick = (statusFilter) => {

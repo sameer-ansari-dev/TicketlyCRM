@@ -8,6 +8,7 @@ export default function Navbar({ onMenuClick }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [headerSearch, setHeaderSearch] = useState("");
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Determine current page title
   const getPageTitle = () => {
@@ -101,7 +102,7 @@ export default function Navbar({ onMenuClick }) {
 
           {/* User Profile Avatar with Logout */}
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-100 transition-colors group text-left"
             title={`Signed in as ${user || "Agent"}. Click to sign out.`}
           >
@@ -121,6 +122,18 @@ export default function Navbar({ onMenuClick }) {
           </button>
         </div>
       </div>
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <h2 id="logout-title" className="text-lg font-bold text-slate-900">Confirm Logout</h2>
+            <p className="mt-2 text-sm text-slate-600">Are you sure you want to logout?</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setShowLogoutConfirm(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+              <button onClick={handleLogout} className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

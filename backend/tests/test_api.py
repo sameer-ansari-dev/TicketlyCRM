@@ -27,17 +27,23 @@ def run_tests():
         print(f"   Initial Stats: Total={stats['total']}, Open={stats['open']}, InProgress={stats['in_progress']}, Closed={stats['closed']}")
         assert stats["total"] >= 1
 
-        all_tickets = list_tickets_endpoint(status=None, search=None, db=db)
+        all_tickets = list_tickets_endpoint(
+            status=None, priority=None, search=None, sort="newest", db=db
+        )
         print(f"   Fetched {len(all_tickets)} tickets.")
         assert len(all_tickets) >= 1
 
         print("2. Testing Status Filter...")
-        filtered_tickets = list_tickets_endpoint(status="Closed", search=None, db=db)
+        filtered_tickets = list_tickets_endpoint(
+            status="Closed", priority=None, search=None, sort="newest", db=db
+        )
         assert all(t.status == "Closed" for t in filtered_tickets)
         print(f"   Filtered {len(filtered_tickets)} Closed tickets.")
 
         print("3. Testing Multi-Field Search...")
-        search_res = list_tickets_endpoint(status=None, search="Connor", db=db)
+        search_res = list_tickets_endpoint(
+            status=None, priority=None, search="Connor", sort="newest", db=db
+        )
         if search_res:
             print("   Search matched successfully.")
 

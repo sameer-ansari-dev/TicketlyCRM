@@ -4,7 +4,8 @@ import StatsCard from "./StatsCard";
 import SearchBar from "./SearchBar";
 import StatusFilter from "./StatusFilter";
 import TicketTable from "./TicketTable";
-import { getTickets, getTicketStats } from "../js/api";
+import { getApiErrorMessage, getTickets, getTicketStats } from "../js/api";
+import { useTicketRefresh } from "../js/ticketRefresh";
 import {
   Ticket,
   Clock,
@@ -29,6 +30,7 @@ export default function Tickets() {
   const [status, setStatus] = useState(initialStatus);
   const [priority, setPriority] = useState(initialPriority);
   const [sort, setSort] = useState(initialSort);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -84,9 +86,7 @@ export default function Tickets() {
       });
       setTickets(data);
     } catch (err) {
-      setError(
-        err.response?.data?.detail || "Could not connect to CRM backend API."
-      );
+      setError(err.userMessage || getApiErrorMessage(err));
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -97,6 +97,16 @@ export default function Tickets() {
     loadTickets();
     loadStats();
   }, [loadTickets, loadStats]);
+
+  const refreshData = useCallback((isRefresh = false) => {
+    loadTickets(isRefresh);
+    loadStats();
+  }, [loadTickets, loadStats]);
+  useTicketRefresh(refreshData);
+
+  useEffect(() => {
+    setPage(1);
+  }, [status, priority, debouncedSearch, sort]);
 
   // Export tickets to CSV
   const exportToCSV = () => {
@@ -126,6 +136,7 @@ export default function Tickets() {
     setStatus("");
     setPriority("");
     setSort("newest");
+    setPage(1);
     setSearchParams({}, { replace: true });
   };
 
@@ -247,10 +258,15 @@ export default function Tickets() {
 
       {/* Ticket Table */}
       <TicketTable
-        tickets={tickets}
+        tickets={tickets.slice((page - 1) * 10, page * 10)}
         loading={loading}
         error={error}
         onResetFilters={handleResetFilters}
+        onRetry={() => loadTickets(true)}
+        page={page}
+        totalTickets={tickets.length}
+        pageSize={10}
+        onPageChange={(nextPage) => setPage(nextPage)}
       />
     </main>
   );
