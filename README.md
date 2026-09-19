@@ -1,6 +1,6 @@
 # TicketlyCRM
 
-TicketlyCRM is a responsive customer-support ticketing application for creating, prioritizing, and tracking customer issues. It pairs a React single-page interface with a FastAPI API and supports Supabase PostgreSQL in production or SQLite for local development.
+TicketlyCRM is a customer-support ticket management CRM built for the Datastraw Technical Assessment. It gives support teams a focused workspace for creating, prioritizing, searching, updating, and resolving customer tickets.
 
 ## Features
 
@@ -13,6 +13,75 @@ TicketlyCRM is a responsive customer-support ticketing application for creating,
 - Receive same-tab updates immediately after ticket changes, with a five-second refresh fallback
 - Attach JPG, PNG, PDF, DOC, or DOCX files up to 10 MB
 - Use the interface comfortably on desktop and mobile layouts
+**Author:** Ansari Mohammed Sameer  
+**Stack:** React, Vite, TailwindCSS, FastAPI, SQLAlchemy, Supabase PostgreSQL, Vercel
+
+## Documentation
+
+| Document | Audience | Contents |
+| --- | --- | --- |
+| [Full Project Documentation](docs/PROJECT_DOCUMENTATION.md) | Reviewers and stakeholders | Product scope, architecture, features, database, API, UI, workflow, testing, and deployment |
+| [Technical Documentation](docs/TECHNICAL_DOCUMENTATION.md) | Engineers | Runtime design, routes, data contracts, configuration, operations, and trade-offs |
+| [User Documentation](docs/USER_DOCUMENTATION.md) | Support agents | Login, ticket triage, notes, attachments, analytics, settings, and troubleshooting |
+| [Datastraw Submission Notes](docs/DATASTRAW_SUBMISSION_NOTES.md) | Company reviewer | Assessment summary, design decisions, verification evidence, and limitations |
+| [Supabase Setup](docs/supabase_setup.md) | Maintainers | Database provisioning and migration guidance |
+
+## Quick Start
+
+Prerequisites: Node.js 18+, Python 3.10+, and a Supabase PostgreSQL connection for production. Local development falls back to SQLite when `DATABASE_URL` is absent.
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+Copy-Item .env.example .env
+
+npm run backend       # FastAPI: http://localhost:8000
+npm run dev           # Vite: http://localhost:5173
+```
+
+Open `http://localhost:5173`. The Vite proxy forwards `/api` requests to port `8000`. FastAPI interactive documentation is available at `http://localhost:8000/docs`.
+
+## Core Features
+
+- Ticket creation with validated customer and issue data
+- Low, Medium, High, and Critical priority management
+- Search by ticket ID, customer, email, subject, or description
+- Status filtering and priority sorting
+- Status and priority updates
+- Internal notes and supported file attachments up to 10 MB
+- Dashboard KPIs and analytics charts
+- Responsive desktop and mobile layouts
+- Local browser authentication with session expiry and logout confirmation
+- Health monitoring from the Settings page
+
+## API Summary
+
+The backend exposes `/api/health`, ticket listing and creation, ticket details, updates, statistics, notes, and attachments. There is currently no DELETE endpoint; deletion is intentionally outside the present MVP scope.
+
+## Security Note
+
+Never commit `.env` or database credentials. Use `.env.example` as the template and configure production secrets in Vercel. Any credential that has been exposed outside a secure secret manager should be rotated before deployment.
+
+## Verification
+
+```powershell
+python -m compileall -q backend main.py api
+npm --prefix frontend run build
+python backend/tests/test_api.py
+python backend/tests/test_vercel_routing.py
+```
+
+## Repository Layout
+
+```text
+api/                 Vercel ASGI entry point
+backend/             FastAPI application, services, models, schemas, tests
+frontend/            React/Vite application
+schema/              PostgreSQL schema and migrations
+docs/                Project, technical, user, and submission documentation
+vercel.json          Vercel build and rewrite configuration
+```
 
 ## Tech stack
 

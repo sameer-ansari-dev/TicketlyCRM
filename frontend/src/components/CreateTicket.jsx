@@ -18,6 +18,7 @@ export default function CreateTicket() {
     subject: "",
     description: "",
     priority: "Medium",
+    status: "Open",
   });
 
   const [loading, setLoading] = useState(false);
@@ -34,21 +35,21 @@ export default function CreateTicket() {
     e.preventDefault();
     setError(null);
 
-    // Basic Validation
-    if (!formData.customer_name.trim()) {
-      setError("Please enter the customer's full name.");
+    // Basic Validation matching backend schema
+    if (!formData.customer_name.trim() || formData.customer_name.trim().length < 2) {
+      setError("Please enter the customer's full name (at least 2 characters).");
       return;
     }
     if (!formData.customer_email.trim() || !formData.customer_email.includes("@")) {
       setError("Please enter a valid email address.");
       return;
     }
-    if (!formData.subject.trim()) {
-      setError("Please enter a ticket subject/title.");
+    if (!formData.subject.trim() || formData.subject.trim().length < 3) {
+      setError("Please enter a ticket subject/title (at least 3 characters).");
       return;
     }
-    if (!formData.description.trim()) {
-      setError("Please describe the customer's issue or request.");
+    if (!formData.description.trim() || formData.description.trim().length < 5) {
+      setError("Please describe the customer's issue or request (at least 5 characters).");
       return;
     }
     if (attachment && attachment.size > 10 * 1024 * 1024) {
@@ -65,7 +66,11 @@ export default function CreateTicket() {
         } catch (uploadError) {
           // The ticket has already been committed. Keep that success visible so
           // a retry cannot accidentally create a second ticket.
-          setError(uploadError.response?.data?.detail || "Ticket was created, but its attachment could not be uploaded.");
+          const uploadDetail = uploadError.response?.data?.detail;
+          const uploadMsg = typeof uploadDetail === "string"
+            ? uploadDetail
+            : "Ticket was created, but its attachment could not be uploaded.";
+          setError(uploadMsg);
           toast.error("Ticket created, but attachment upload failed");
         }
       }
@@ -79,9 +84,21 @@ export default function CreateTicket() {
       }, 1200);
     } catch (err) {
       toast.error("Could not create ticket");
-      setError(
-        err.response?.data?.detail || "Failed to create support ticket. Please check backend."
-      );
+      let message = "Failed to create support ticket. Please check backend.";
+      const detail = err.response?.data?.detail;
+      if (typeof detail === "string") {
+        message = detail;
+      } else if (Array.isArray(detail)) {
+        message = detail
+          .map((e) => {
+            const field = e.loc ? e.loc.filter((p) => p !== "body").join(".") : "";
+            return field ? `${field}: ${e.msg}` : e.msg;
+          })
+          .join("; ");
+      } else if (err.userMessage) {
+        message = err.userMessage;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }

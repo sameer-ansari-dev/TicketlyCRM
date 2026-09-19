@@ -1,6 +1,9 @@
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger("ticketlycrm.tickets")
 
 from app.database.database import get_db
 from app.schemas.ticket_schema import (
@@ -38,6 +41,7 @@ def create_ticket_endpoint(
     ticket_in: TicketCreate,
     db: Session = Depends(get_db)
 ):
+    logger.info("Creating ticket with payload: %s", ticket_in.model_dump())
     ticket = ticket_service.create_ticket(db, ticket_in)
     return TicketCreateResponse(
         ticket_id=ticket.ticket_id,
@@ -154,3 +158,22 @@ async def upload_ticket_attachment_endpoint(
     db: Session = Depends(get_db),
 ):
     return await attachment_service.add_attachment(db, ticket_id, file)
+
+
+@router.delete(
+    "/{ticket_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete a ticket by ticket_id"
+)
+def delete_ticket_endpoint(
+    ticket_id: str,
+    db: Session = Depends(get_db)
+):
+    deleted = ticket_service.delete_ticket(db, ticket_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Ticket '{ticket_id}' not found."
+        )
+    return {"success": True, "message": f"Ticket '{ticket_id}' deleted successfully."}
+

@@ -11,6 +11,7 @@ if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -86,6 +87,41 @@ async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError):
             "code": "DATABASE_ERROR",
             "request_id": request_id,
         }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    request_id = request.headers.get("x-vercel-id", uuid4().hex)
+    body = None
+    try:
+        body = await request.json()
+    except Exception:
+        try:
+            raw = await request.body()
+            body = raw.decode("utf-8", errors="ignore")
+        except Exception:
+            body = "<unavailable>"
+
+    failed_fields = [
+        ".".join(str(loc) for loc in err.get("loc", []) if loc != "body")
+        for err in exc.errors()
+    ]
+    logger.warning(
+        "Request validation error (422) request_id=%s method=%s path=%s failed_fields=%s errors=%s body=%s",
+        request_id,
+        request.method,
+        request.url.path,
+        failed_fields,
+        exc.errors(),
+        body,
+    )
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY if hasattr(status, "HTTP_422_UNPROCESSABLE_ENTITY") else 422,
+        content={
+            "detail": exc.errors(),
+            "failed_fields": failed_fields,
+            "message": f"Validation failed for fields: {', '.join(failed_fields) if failed_fields else 'unknown'}",
+        },
     )
 
 configured_origins = {

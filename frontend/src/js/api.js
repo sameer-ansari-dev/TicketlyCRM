@@ -26,8 +26,25 @@ const API = axios.create({
 });
 
 export const getApiErrorMessage = (error) => {
-  if (error.response?.data?.detail) {
-    return error.response.data.detail;
+  const detail = error.response?.data?.detail;
+  if (detail) {
+    if (typeof detail === "string") {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      return detail
+        .map((err) => {
+          const field = err.loc ? err.loc.filter((p) => p !== "body").join(".") : "";
+          return field ? `${field}: ${err.msg}` : err.msg;
+        })
+        .join(", ");
+    }
+    if (typeof detail === "object" && detail !== null) {
+      return detail.message || JSON.stringify(detail);
+    }
+  }
+  if (error.response?.data?.message) {
+    return error.response.data.message;
   }
   if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
     return "The CRM backend took too long to respond. Please try again.";
@@ -91,6 +108,11 @@ export const updateTicket = async (ticketId, updateData) => {
 
 export const addTicketNote = async (ticketId, noteData) => {
   const response = await API.post(`/tickets/${ticketId}/notes`, noteData);
+  return response.data;
+};
+
+export const deleteTicket = async (ticketId) => {
+  const response = await API.delete(`/tickets/${ticketId}`);
   return response.data;
 };
 

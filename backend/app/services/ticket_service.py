@@ -23,7 +23,7 @@ def create_ticket(db: Session, ticket_in: TicketCreate) -> Ticket:
         subject=ticket_in.subject.strip(),
         description=ticket_in.description.strip(),
         priority=ticket_in.priority or "Medium",
-        status="Open",
+        status=getattr(ticket_in, "status", None) or "Open",
         created_at=now,
         updated_at=now,
     )
@@ -168,3 +168,17 @@ def get_ticket_stats(db: Session) -> dict:
         "closed": status_counts.get("Closed", 0),
         "priorities": {priority: priority_counts.get(priority, 0) for priority in ("Low", "Medium", "High", "Critical")},
     }
+
+
+def delete_ticket(db: Session, ticket_id: str) -> bool:
+    ticket = get_ticket_by_id(db, ticket_id)
+    if not ticket:
+        return False
+    try:
+        db.delete(ticket)
+        db.commit()
+        return True
+    except Exception:
+        db.rollback()
+        raise
+
